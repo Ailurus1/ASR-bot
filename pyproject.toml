@@ -1,0 +1,19 @@
+[project]
+name = "ASR-bot"
+version = "0.1.0"
+authors = ["Ailurus1"]
+description = ""
+
+dependencies = [
+    "pre-commit",
+    "numpy",
+    "torch",
+    "fastapi",
+    "python-telegram-bot",
+    "requests",
+    "pytest"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
