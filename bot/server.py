@@ -40,6 +40,7 @@ class Bot(object):
         """
         Asynchronous query for getting
         text response from model service
+        triggered by any audio message
         """
         message = await update.message.reply_text(
             "Transcribing your audio message...",
@@ -66,7 +67,7 @@ class Bot(object):
 
     def run(self) -> None:
         """
-        Running infinite polling
+        Infinite polling
         """
         self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("help", self.help))
