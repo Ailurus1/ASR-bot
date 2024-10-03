@@ -14,12 +14,6 @@ from telegram.ext import (
 
 
 class Bot(object):
-    """
-    Telegram bot which can
-    read prompt and simply get
-    the result from specified model
-    """
-
     def __init__(self, token: str, model_endpoint: str) -> None:
         self.app = ApplicationBuilder().token(token).build()
         self.model_endpoint = model_endpoint
