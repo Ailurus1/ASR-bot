@@ -16,14 +16,17 @@ bot = [
 ]
 asr-service = [
     "fastapi",
+    "numpy <2.0.0",
     "uvicorn",
     "torch",
     "transformers",
-    "librosa",
+    "torchaudio",
     "python-multipart"
 ]
 train = [
+    "numpy <2.0.0",
     "torch",
+    "torchaudio",
     "transformers"
 ]
 

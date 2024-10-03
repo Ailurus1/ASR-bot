@@ -1,4 +1,6 @@
 from typing import List
+from io import BytesIO
+import json
 import requests
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -66,7 +68,10 @@ class Bot(object):
             reply_to_message_id=update.message.message_id
         )
 
-        text = requests.post(self.model_endpoint, files={'audio_message': message}, timeout=None)
+        audio = await update.message.voice.get_file()
+        audio_bytes = BytesIO(await audio.download_as_bytearray())
+        raw_response = requests.post(self.model_endpoint, files={'audio_message': ('audio_message.wav', audio_bytes)}, timeout=None)
+        text = json.loads(raw_response.text)["transcription"][0]
 
         await context.bot.delete_message(
             chat_id=message.chat_id,
@@ -76,9 +81,6 @@ class Bot(object):
         await context.bot.send_message(
             chat_id=message.chat_id,
             text=text,
-            read_timeout=60,
-            write_timeout=60,
-            pool_timeout=60
         )
 
     def run(self) -> None:
