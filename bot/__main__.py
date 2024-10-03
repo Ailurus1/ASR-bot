@@ -3,7 +3,7 @@ from utils import get_telegram_token
 
 
 def launch_bot(telegram_token: str) -> None:
-    app = Bot(telegram_token, "http://localhost:8000/")
+    app = Bot(telegram_token, "http://localhost:9090/asr/")
     app.run()
 
 

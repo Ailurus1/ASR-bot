@@ -19,7 +19,8 @@ asr-service = [
     "uvicorn",
     "torch",
     "transformers",
-    "librosa"
+    "librosa",
+    "python-multipart"
 ]
 train = [
     "torch",
