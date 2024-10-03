@@ -9,7 +9,7 @@ def launch_bot(telegram_token: str) -> None:
 
 def main() -> None:
     launch_bot(
-        telegram_token=get_telegram_token(), 
+        telegram_token=get_telegram_token(),
     )
 
 
