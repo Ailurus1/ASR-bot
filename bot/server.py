@@ -66,8 +66,7 @@ class Bot(object):
             reply_to_message_id=update.message.message_id
         )
 
-        # text = requests.post(self.model_endpoint, files={'audio_message': message})
-        text = "Audio processed"
+        text = requests.post(self.model_endpoint, files={'audio_message': message}, timeout=None)
 
         await context.bot.delete_message(
             chat_id=message.chat_id,
@@ -76,7 +75,10 @@ class Bot(object):
 
         await context.bot.send_message(
             chat_id=message.chat_id,
-            text=text
+            text=text,
+            read_timeout=60,
+            write_timeout=60,
+            pool_timeout=60
         )
 
     def run(self) -> None:
