@@ -1,0 +1,13 @@
+FROM python:3.9
+
+RUN apt update && \
+    apt upgrade && \
+    apt install curl make
+
+COPY . .
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+RUN /root/.cargo/bin/uv pip install --system -r inference-server/requirements.txt
+
+CMD [ "python3", "-u", "inference-server" ]
