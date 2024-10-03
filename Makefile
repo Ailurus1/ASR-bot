@@ -1,8 +1,10 @@
 install: SHELL:=/bin/bash
 install:
-	@uv --version || curl -LsSf https://astral.sh/uv/install.sh | sh
-	@uv venv --python 3.11 --python-preference only-managed
-	@source .venv/bin/activate
+	@if [[ -z ${VIRTUAL_ENV} ]]; then\
+		@uv --version || curl -LsSf https://astral.sh/uv/install.sh | sh;\
+		@uv venv --python 3.11 --python-preference only-managed;\
+		@source .venv/bin/activate;\
+	fi
 	@uv pip install -r requirements.txt
 
 update-deps:

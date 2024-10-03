@@ -6,9 +6,6 @@ description = ""
 
 dependencies = [
     "pre-commit",
-    "numpy",
-    "torch",
-    "fastapi",
     "python-telegram-bot",
     "requests",
     "pytest"
