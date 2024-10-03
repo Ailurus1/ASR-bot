@@ -6,9 +6,24 @@ description = ""
 
 dependencies = [
     "pre-commit",
+    "pytest"
+]
+
+[project.optional-dependencies]
+bot = [
     "python-telegram-bot",
     "requests",
-    "pytest"
+]
+asr-service = [
+    "fastapi",
+    "uvicorn",
+    "torch",
+    "transformers",
+    "librosa"
+]
+train = [
+    "torch",
+    "transformers"
 ]
 
 [build-system]
