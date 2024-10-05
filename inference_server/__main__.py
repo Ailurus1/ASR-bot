@@ -4,14 +4,16 @@ import uvicorn
 from io import BytesIO
 import torch
 import torchaudio
-from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 app = FastAPI()
 
-model_name = "facebook/wav2vec2-base-960h"
-processor = Wav2Vec2Processor.from_pretrained(model_name)
-model = Wav2Vec2ForCTC.from_pretrained(model_name).to("cpu")
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
+model_name = "openai/whisper-tiny"
+processor = WhisperProcessor.from_pretrained(model_name)
+model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device)
+model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(language="russian", task="transcribe")
 
 @app.post("/asr/")
 async def transcribe_audio(audio_message: UploadFile = File(...)):
@@ -25,16 +27,15 @@ async def transcribe_audio(audio_message: UploadFile = File(...)):
                 orig_freq=sample_rate, new_freq=16000
             )
             audio_data = resampler(audio_data)
-
-        input_values = processor(
+        
+        input_features = processor(
             audio_data.squeeze().numpy(), return_tensors="pt", sampling_rate=16000
-        ).input_values
+        ).input_features.to(device)
 
         with torch.no_grad():
-            logits = model(input_values).logits
+            predicted_ids = model.generate(input_features)
 
-        predicted_ids = torch.argmax(logits, dim=-1)
-        transcription = processor.batch_decode(predicted_ids)
+        transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)
 
         return JSONResponse(content={"transcription": transcription})
 
