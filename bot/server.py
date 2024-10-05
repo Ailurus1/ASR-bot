@@ -14,7 +14,7 @@ from telegram.ext import (
 
 
 class Bot(object):
-    def __init__(self, token: str, model_endpoint: str) -> None:
+    def __init__(self, token: str, model_endpoint: str = None) -> None:
         self.app = ApplicationBuilder().token(token).build()
         self.model_endpoint = model_endpoint
         self.keyboard: List[Any] = []
@@ -54,7 +54,15 @@ class Bot(object):
             files={"audio_message": ("audio_message.wav", audio_bytes)},
             timeout=None,
         )
-        text = json.loads(raw_response.text)["transcription"][0]
+
+        try:
+            text = json.loads(raw_response.text)["transcription"][0]
+        except Exception as exc:
+            print(exc)
+            raise RuntimeError(
+                f"Expected to get `transcription` field in " \
+                f"response. Got {json.loads(raw_response.text)}"
+            )
 
         await context.bot.delete_message(
             chat_id=message.chat_id, message_id=message.message_id

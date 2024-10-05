@@ -21,6 +21,7 @@ asr-service = [
     "torch",
     "transformers",
     "torchaudio",
+    "soundfile",
     "python-multipart"
 ]
 train = [

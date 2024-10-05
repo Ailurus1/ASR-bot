@@ -10,4 +10,6 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 RUN /root/.cargo/bin/uv pip install --system -r inference_server/requirements.txt
 
+EXPOSE 9090:9090
+
 CMD [ "python3", "-u", "inference_server" ]

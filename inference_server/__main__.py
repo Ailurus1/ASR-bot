@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 import uvicorn
+import os
 from io import BytesIO
 import torch
 import torchaudio
@@ -27,7 +28,7 @@ async def transcribe_audio(audio_message: UploadFile = File(...)):
                 orig_freq=sample_rate, new_freq=16000
             )
             audio_data = resampler(audio_data)
-        
+
         input_features = processor(
             audio_data.squeeze().numpy(), return_tensors="pt", sampling_rate=16000
         ).input_features.to(device)
