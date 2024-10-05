@@ -1,7 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 import uvicorn
-import os
 from io import BytesIO
 import torch
 import torchaudio
@@ -14,7 +13,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model_name = "openai/whisper-tiny"
 processor = WhisperProcessor.from_pretrained(model_name)
 model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device)
-model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(language="russian", task="transcribe")
+model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(
+    language="russian", task="transcribe"
+)
+
 
 @app.post("/asr/")
 async def transcribe_audio(audio_message: UploadFile = File(...)):

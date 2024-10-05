@@ -14,7 +14,9 @@ from telegram.ext import (
 
 
 class Bot(object):
-    def __init__(self, token: str, model_endpoint: str = None) -> None:
+    def __init__(
+        self, token: str, model_endpoint: str = "http://localhost:9090/asr/"
+    ) -> None:
         self.app = ApplicationBuilder().token(token).build()
         self.model_endpoint = model_endpoint
         self.keyboard: List[Any] = []
@@ -60,7 +62,7 @@ class Bot(object):
         except Exception as exc:
             print(exc)
             raise RuntimeError(
-                f"Expected to get `transcription` field in " \
+                f"Expected to get `transcription` field in "
                 f"response. Got {json.loads(raw_response.text)}"
             )
 
