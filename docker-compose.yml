@@ -1,0 +1,29 @@
+services:
+
+  bot-service:
+    image: asr/tg-bot
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bot
+    networks:
+      - asr-service-network
+    ports:
+      - "8080:8080"
+    depends_on:
+      - inference-service
+    env_file:
+      - .env
+
+  inference-service:
+    image: asr/inference-server
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.inference-server
+    networks:
+      - asr-service-network
+    ports:
+      - "9090:9090"
+
+networks:
+  asr-service-network:
+    driver: bridge

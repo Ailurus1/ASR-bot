@@ -1,0 +1,8 @@
+*/.env
+*/__pycache__
+*/.mypy_cache
+*/.github
+*/bot
+*/.venv
+*/.ruff_cache
+*/modeling
