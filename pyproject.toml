@@ -6,13 +6,34 @@ description = ""
 
 dependencies = [
     "pre-commit",
-    "numpy",
-    "torch",
-    "fastapi",
-    "python-telegram-bot",
-    "requests",
     "pytest"
 ]
+
+[project.optional-dependencies]
+bot = [
+    "python-telegram-bot",
+    "requests",
+]
+asr-service = [
+    "fastapi",
+    "numpy <2.0.0",
+    "uvicorn",
+    "torch",
+    "transformers",
+    "torchaudio",
+    "soundfile",
+    "python-multipart"
+]
+train = [
+    "numpy <2.0.0",
+    "torch",
+    "torchaudio",
+    "transformers"
+]
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
 
 [build-system]
 requires = ["hatchling"]

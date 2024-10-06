@@ -1,0 +1,34 @@
+services:
+
+  bot-service:
+    image: asr/tg-bot
+    build:
+      context: .
+      dockerfile: docker/bot/Dockerfile.bot
+    networks:
+      - asr-service-network
+    depends_on:
+      - inference-service
+    ports:
+      - "443"
+      - "9090"
+    env_file:
+      - .env
+    environment:
+      CONTAINERIZED: true
+
+  inference-service:
+    image: asr/inference-server
+    build:
+      context: .
+      dockerfile: docker/inference-server/Dockerfile.inference-server
+    networks:
+      - asr-service-network
+    ports:
+        - "9090"
+    environment:
+      CONTAINERIZED: true
+
+networks:
+  asr-service-network:
+    driver: bridge

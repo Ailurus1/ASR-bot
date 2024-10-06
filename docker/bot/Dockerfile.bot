@@ -1,0 +1,13 @@
+FROM python:alpine3.17
+
+RUN apk update && \
+    apk upgrade && \
+    apk add make bash curl
+
+COPY . .
+
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+RUN /root/.cargo/bin/uv pip install --system -r bot/requirements.txt
+
+CMD [ "python3", "-u", "bot" ]
