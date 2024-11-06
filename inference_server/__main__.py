@@ -22,7 +22,6 @@ model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(
 async def transcribe_audio(audio_message: UploadFile = File(...)):
     try:
         audio_bytes = await audio_message.read()
-
         audio_data, sample_rate = torchaudio.load(BytesIO(audio_bytes))
 
         if sample_rate != 16000:
