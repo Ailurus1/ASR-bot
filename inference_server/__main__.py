@@ -10,7 +10,7 @@ app = FastAPI()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-model_name = "openai/whisper-tiny"
+model_name = "Ailurus/whisper-tiny-finetuned-ru"
 processor = WhisperProcessor.from_pretrained(model_name)
 model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device)
 model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(
