@@ -22,7 +22,8 @@ asr-service = [
     "transformers",
     "torchaudio",
     "soundfile",
-    "python-multipart"
+    "python-multipart",
+    "moviepy"
 ]
 train = [
     "numpy <2.0.0",

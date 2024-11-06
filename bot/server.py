@@ -14,6 +14,7 @@ from telegram.ext import (
 
 from moviepy.editor import VideoFileClip
 
+
 class Bot(object):
     def __init__(
         self, token: str, model_endpoint: str = "http://localhost:9090/asr/"
@@ -55,13 +56,13 @@ class Bot(object):
         elif update.message.video_note is not None:
             video_note = await update.message.video_note.get_file()
             byte_data = await video_note.download_as_bytearray()
-            with open('video_note.mp4', 'wb') as video_file:
+            with open("video_note.mp4", "wb") as video_file:
                 video_file.write(byte_data)
 
-            audio_clip = VideoFileClip('video_note.mp4').audio
-            audio_clip.write_audiofile('audio.oga', codec='libvorbis')
+            audio_clip = VideoFileClip("video_note.mp4").audio
+            audio_clip.write_audiofile("audio.oga", codec="libvorbis")
 
-            with open('audio.oga', 'rb') as file:
+            with open("audio.oga", "rb") as file:
                 byte_data = file.read()
             audio_bytes = BytesIO(byte_data)
 
@@ -96,7 +97,10 @@ class Bot(object):
         self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("help", self.help))
         self.app.add_handler(
-            MessageHandler(filters.VOICE & ~filters.COMMAND, self.query, )
+            MessageHandler(
+                filters.VOICE & ~filters.COMMAND,
+                self.query,
+            )
         )
         self.app.add_handler(
             MessageHandler(filters.VIDEO_NOTE & ~filters.COMMAND, self.query)
