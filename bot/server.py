@@ -2,7 +2,6 @@ from io import BytesIO
 from typing import List, Any
 import json
 
-
 import requests
 from telegram import Update, InlineKeyboardMarkup
 from telegram.ext import (
@@ -46,15 +45,14 @@ class Bot(object):
         text response from model service
         triggered by any audio message
         """
-
         message = await update.message.reply_text(
             "Transcribing your audio message...",
             reply_to_message_id=update.message.message_id,
         )
-        if update.message.voice != None:
+        if update.message.voice is not None:
             audio = await update.message.voice.get_file()
             audio_bytes = BytesIO(await audio.download_as_bytearray())
-        elif update.message.video_note != None:
+        elif update.message.video_note is not None:
             video_note = await update.message.video_note.get_file()
             byte_data = await video_note.download_as_bytearray()
             with open('video_note.mp4', 'wb') as video_file:
