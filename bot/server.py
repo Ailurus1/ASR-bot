@@ -51,6 +51,7 @@ class Bot(object):
 
         audio = await update.message.voice.get_file()
         audio_bytes = BytesIO(await audio.download_as_bytearray())
+        # TODO: error message
         raw_response = requests.post(
             self.model_endpoint,
             files={"audio_message": ("audio_message.wav", audio_bytes)},

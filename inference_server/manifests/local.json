@@ -1,0 +1,9 @@
+{
+    "model_name": "openai/whisper-tiny",
+    "lora": "",
+    "hf": true,
+    "model_features": {
+        "language": "russian",
+        "task": "transcribe"
+    }
+}

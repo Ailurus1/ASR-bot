@@ -22,13 +22,16 @@ asr-service = [
     "transformers",
     "torchaudio",
     "soundfile",
-    "python-multipart"
+    "python-multipart",
+    "peft",
+    "torch",
+    "setuptools",
 ]
 train = [
     "numpy <2.0.0",
     "torch",
     "torchaudio",
-    "transformers"
+    "transformers",
 ]
 
 [tool.mypy]
