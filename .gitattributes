@@ -1,5 +1,4 @@
 modeling/lora-adapters/lora-adapter-sber-crowd filter=lfs diff=lfs merge=lfs -text
 modeling/lora-adapters/lora-adapter-sber-farfield filter=lfs diff=lfs merge=lfs -text
 modeling/lora-adapters/lora-adapter-single-voice filter=lfs diff=lfs merge=lfs -text
-* !text !filter !merge !diff
 modeling/lora-adapters/* filter=lfs diff=lfs merge=lfs -text
