@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Dict, List, Any
 import torch
 from transformers import (
@@ -10,47 +9,36 @@ from transformers import (
 from peft import PeftModel
 from io import BytesIO
 import torchaudio
-
-
-@dataclass
-class ASRConfig:
-    model_name: str
-    lora: str
-    hf: bool
-    model_features: Dict[str, str]
+from profiles import ModelProfile
 
 
 class ASRModel:
     pipeline: AutomaticSpeechRecognitionPipeline
     generate_kwargs: Dict[str, Any]
 
-    def __init__(self, config: Dict[str, Any]) -> None:
+    def __init__(self, config: ModelProfile) -> None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        if not config["hf"]:
+        if not config.hf:
             assert "Not implemented"
 
-        model = AutoModelForSpeechSeq2Seq.from_pretrained(config["model_name"]).to(
-            device
-        )
+        model = AutoModelForSpeechSeq2Seq.from_pretrained(config.model_name).to(device)
 
-        if config["lora"]:
-            model = PeftModel.from_pretrained(model, config["lora"])
+        if config.lora_name:
+            model = PeftModel.from_pretrained(model, config.lora_name)
 
         tokenizer = AutoTokenizer.from_pretrained(
-            config["model_name"], **config["model_features"]
+            config.model_name, **config.model_features
         )
         processor = AutoProcessor.from_pretrained(
-            config["model_name"], **config["model_features"]
+            config.model_name, **config.model_features
         )
 
         # need to check if it really improves a transcription
-        forced_decoder_ids = processor.get_decoder_prompt_ids(
-            **config["model_features"]
-        )
+        forced_decoder_ids = processor.get_decoder_prompt_ids(**config.model_features)
 
         self.generate_kwargs = {
             "forced_decoder_ids": forced_decoder_ids,
-            **config["model_features"],
+            **config.model_features,
         }
 
         self.pipeline = AutomaticSpeechRecognitionPipeline(
