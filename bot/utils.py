@@ -1,5 +1,6 @@
 import os
 import time
+from telegram.ext import ContextTypes
 
 
 def get_telegram_token() -> str:
@@ -31,3 +32,10 @@ def retry(num_retries: int, wait_time: int):
         return _inner_wrapper
 
     return _outer_wrapper
+
+
+async def get_error_message(context: ContextTypes.DEFAULT_TYPE, chat_id: int):
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=("Sorry, there was an error on our end. Please try again later."),
+    )
