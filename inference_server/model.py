@@ -68,8 +68,8 @@ class ASRModel:
         return audio_data.squeeze().numpy()
 
     def transcribe(self, audio: Union[AudioType, List[AudioType]]) -> List[str]:
-        if isinstance(audio, get_args(UnpreparedAudioType)):  # noqa
-            audio = self.preprocess(audio)  # noqa
+        if isinstance(audio, get_args(UnpreparedAudioType)):
+            audio = self.preprocess(audio)
 
         with torch.cuda.amp.autocast():
             outputs = self.pipeline(
