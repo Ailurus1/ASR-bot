@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
 import torch
 from transformers import (
     AutomaticSpeechRecognitionPipeline,
@@ -10,6 +10,14 @@ from peft import PeftModel
 from io import BytesIO
 import torchaudio
 from profiles import ModelProfile
+from pathlib import Path
+import numpy as np
+from typing import get_args
+
+
+UnpreparedAudioType = Union[BytesIO, str, Path]
+PreparedAudioType = Union[np.array, torch.tensor]
+AudioType = Union[UnpreparedAudioType, PreparedAudioType]
 
 
 class ASRModel:
@@ -48,8 +56,8 @@ class ASRModel:
             device=device,
         )
 
-    def preprocess(self, audio_bytes) -> List[float]:
-        audio_data, sample_rate = torchaudio.load(audio_bytes)
+    def preprocess(self, audio: UnpreparedAudioType) -> List[float]:
+        audio_data, sample_rate = torchaudio.load(audio)
 
         if sample_rate != self.pipeline.feature_extractor.sampling_rate:
             resampler = torchaudio.transforms.Resample(
@@ -59,10 +67,17 @@ class ASRModel:
             audio_data = resampler(audio_data)
         return audio_data.squeeze().numpy()
 
-    def transcribe(self, audio_bytes: BytesIO) -> List[str]:
-        audio = self.preprocess(audio_bytes)
+    def transcribe(self, audio: Union[AudioType, List[AudioType]]) -> List[str]:
+        if isinstance(audio, get_args(UnpreparedAudioType)):  # noqa
+            audio = self.preprocess(audio)  # noqa
+
         with torch.cuda.amp.autocast():
-            text = self.pipeline(
+            outputs = self.pipeline(
                 audio, generate_kwargs=self.generate_kwargs, max_new_tokens=255
-            )["text"]
-        return [text]
+            )
+            if isinstance(outputs, List):
+                outputs = [output["text"] for output in outputs]
+            else:
+                outputs = [outputs["text"]]
+
+        return outputs
