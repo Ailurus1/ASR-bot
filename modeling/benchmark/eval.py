@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-def _split_into_batches(df: pl.DataFrame, batch_size: int):
+def _split_into_batches(df: pl.DataFrame, batch_size: int) -> List[pl.DataFrame]:
     num_rows = df.shape[0]
     num_batches = (num_rows + batch_size - 1) // batch_size
     batches = [df[i * batch_size : (i + 1) * batch_size] for i in range(num_batches)]
@@ -79,7 +79,6 @@ def main() -> None:
 
     data = dataset["test"].to_polars()
     audio_data = data.with_columns(pl.struct(pl.all()).map_elements(return_audio_bytes))
-    audio_data = pl.DataFrame()
     audio_data = audio_data.drop_nulls()
     logger.info("Start evaluation")
 
@@ -88,22 +87,25 @@ def main() -> None:
     )
     logger.info("End evaluation")
     if args.save:
+        args.output.mkdir(parents=True, exist_ok=True)
         logger.info("Saving results")
         current_time = datetime.datetime.now()
         formatted_time = current_time.strftime("%Y-%m-%d_%H-%M-%S")
-        result_filename = f"result_{formatted_time}.txt"
+        result_filename = f"result_{formatted_time}.json"
         with open(args.output.joinpath(result_filename), "w") as f:
             json.dump(
-                {"model": args.profile, "wer": wer_score, "dataset": args.input}, f
+                {"model": args.profile, "wer": wer_score, "dataset": str(args.input)}, f
             )
-        artifacts = f"artifacts_{formatted_time}.txt"
-        with open(args.output.joinpath(artifacts), "w") as f:
+        artifacts = f"artifacts_{formatted_time}.json"
+        with open(args.output.joinpath(artifacts), "w", encoding="utf-8") as f:
             json.dump(
                 [
                     {"model_output": output, "original_transcription": transcription}
                     for output, transcription in zip(model_outputs, transcriptions)
                 ],
                 f,
+                ensure_ascii=False,
+                indent=4,
             )
 
 

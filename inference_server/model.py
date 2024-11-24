@@ -9,7 +9,7 @@ from transformers import (
 from peft import PeftModel
 from io import BytesIO
 import torchaudio
-from profiles import ModelProfile
+from inference_server.profiles import ModelProfile
 from pathlib import Path
 import numpy as np
 from typing import get_args

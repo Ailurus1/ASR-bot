@@ -35,6 +35,8 @@ train = [
     "torch",
     "torchaudio",
     "transformers",
+    "polars",
+    "jiwer",
 ]
 
 [tool.mypy]
