@@ -23,6 +23,7 @@ AudioType = Union[UnpreparedAudioType, PreparedAudioType]
 class ASRModel:
     pipeline: AutomaticSpeechRecognitionPipeline
     generate_kwargs: Dict[str, Any]
+    sampling_rate: int
 
     def __init__(self, config: ModelProfile) -> None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -55,14 +56,15 @@ class ASRModel:
             feature_extractor=processor.feature_extractor,
             device=device,
         )
+        self.sampling_rate = self.pipeline.feature_extractor.sampling_rate
 
     def preprocess(self, audio: UnpreparedAudioType) -> List[float]:
         audio_data, sample_rate = torchaudio.load(audio)
 
-        if sample_rate != self.pipeline.feature_extractor.sampling_rate:
+        if sample_rate != self.sampling_rate:
             resampler = torchaudio.transforms.Resample(
                 orig_freq=sample_rate,
-                new_freq=self.pipeline.feature_extractor.sampling_rate,
+                new_freq=self.sampling_rate,
             )
             audio_data = resampler(audio_data)
         return audio_data.squeeze().numpy()
