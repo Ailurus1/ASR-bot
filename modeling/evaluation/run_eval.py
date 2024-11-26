@@ -10,8 +10,7 @@ import logging
 import polars as pl
 from typing import Tuple, List
 import json
-import torchaudio
-from datasets import load_dataset
+from modeling.evaluation.benchmarks import DATASETS
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,38 +53,27 @@ def evaluate(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--profile", type=str, default="classical-tiny")
+    parser.add_argument("--model_profile", type=str, default="classical-tiny")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--batch", type=int, default=1)
     parser.add_argument("--save", action="store_true")
     parser.add_argument("--output", type=Path, default=Path(".logs"))
-    parser.add_argument("--input", type=Path, default=Path("datasets"))
+    parser.add_argument("--dataset_profile", type=str, default="sber-golos-farfield")
 
     args = parser.parse_args()
 
-    asr_model = ASRModel(PROFILES[args.profile])
+    asr_model = ASRModel(PROFILES[args.model_profile])
+    dataset = DATASETS[args.dataset_profile]
 
-    farfield = "bond005/sberdevices_golos_100h_farfield"
-    dataset = load_dataset(farfield)
+    logger.info("Get evaluation dataset")
+    audio_data = dataset.get_eval_dataset(asr_model.sampling_rate)
 
-    def return_audio_bytes(row):
-        audio_data, sample_rate = torchaudio.load(row["audio"]["bytes"])
-        if sample_rate != 16000:
-            resampler = torchaudio.transforms.Resample(
-                orig_freq=sample_rate, new_freq=16000
-            )
-            audio_data = resampler(audio_data)
-        return audio_data.squeeze().numpy()
-
-    data = dataset["test"].to_polars()
-    audio_data = data.with_columns(pl.struct(pl.all()).map_elements(return_audio_bytes))
-    audio_data = audio_data.drop_nulls()
     logger.info("Start evaluation")
-
     wer_score, model_outputs, transcriptions = evaluate(
         asr_model, audio_data, args.batch, args.limit
     )
     logger.info("End evaluation")
+
     if args.save:
         args.output.mkdir(parents=True, exist_ok=True)
         logger.info("Saving results")
@@ -94,7 +82,12 @@ def main() -> None:
         result_filename = f"result_{formatted_time}.json"
         with open(args.output.joinpath(result_filename), "w") as f:
             json.dump(
-                {"model": args.profile, "wer": wer_score, "dataset": str(args.input)}, f
+                {
+                    "model": args.model_profile,
+                    "wer": wer_score,
+                    "dataset": args.dataset_profile,
+                },
+                f,
             )
         artifacts = f"artifacts_{formatted_time}.json"
         with open(args.output.joinpath(artifacts), "w", encoding="utf-8") as f:
@@ -107,6 +100,14 @@ def main() -> None:
                 ensure_ascii=False,
                 indent=4,
             )
+    print(
+        "model:",
+        args.model_profile,
+        "wer:",
+        wer_score,
+        "dataset:",
+        args.dataset_profile,
+    )
 
 
 if __name__ == "__main__":
