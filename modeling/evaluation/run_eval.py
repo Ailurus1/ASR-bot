@@ -4,7 +4,6 @@ from inference_server.model import ASRModel
 from tqdm import tqdm
 from evaluate import load
 from pathlib import Path
-from typing import Optional
 import datetime
 import logging
 import polars as pl
@@ -31,10 +30,7 @@ def evaluate(
     model: ASRModel,
     dataset: pl.DataFrame,
     batch_size: int = 4,
-    num_examples: Optional[int] = 100,
 ) -> Tuple[float, List[str], List[str]]:
-    if num_examples:
-        dataset = dataset.sample(num_examples, seed=42)
     batches = _split_into_batches(dataset, batch_size)
 
     model_outputs = []
@@ -66,11 +62,11 @@ def main() -> None:
     dataset = DATASETS[args.dataset_profile]
 
     logger.info("Get evaluation dataset")
-    audio_data = dataset.get_eval_dataset(asr_model.sampling_rate)
+    audio_data = dataset.get_eval_dataset(asr_model.sampling_rate, args.limit)
 
     logger.info("Start evaluation")
     wer_score, model_outputs, transcriptions = evaluate(
-        asr_model, audio_data, args.batch, args.limit
+        asr_model, audio_data, args.batch
     )
     logger.info("End evaluation")
 

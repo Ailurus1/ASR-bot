@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import polars as pl
 from datasets import load_dataset
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 class PreparedDataset(ABC):
@@ -17,5 +17,7 @@ class PreparedDataset(ABC):
             raise exc
 
     @abstractmethod
-    def get_eval_dataset(self, samplint_rate: int) -> pl.DataFrame:
+    def get_eval_dataset(
+        self, samplint_rate: int, limit: Optional[int]
+    ) -> pl.DataFrame:
         raise NotImplementedError("Subclasses should implement this method")
