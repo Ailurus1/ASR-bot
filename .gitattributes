@@ -1,2 +1,0 @@
-modeling/lora-adapters/**/* filter=lfs diff=lfs merge=lfs -text
-modeling/lora-adapters/**/* !text !filter !merge !diff
