@@ -1,7 +1,9 @@
 [project]
 name = "ASR-bot"
 version = "0.1.0"
-authors = ["Ailurus1"]
+authors = [
+    {name = "Ailurus1"},
+]
 description = ""
 
 dependencies = [
@@ -23,13 +25,17 @@ asr-service = [
     "torchaudio",
     "soundfile",
     "python-multipart",
+    "peft",
+    "setuptools",
     "moviepy"
 ]
 train = [
     "numpy <2.0.0",
     "torch",
     "torchaudio",
-    "transformers"
+    "transformers",
+    "polars",
+    "jiwer",
 ]
 
 [tool.mypy]
@@ -39,3 +45,6 @@ ignore_missing_imports = true
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["inference_server", "modeling", "bot"]
