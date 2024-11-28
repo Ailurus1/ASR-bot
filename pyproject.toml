@@ -26,7 +26,6 @@ asr-service = [
     "soundfile",
     "python-multipart",
     "peft",
-    "torch",
     "setuptools",
     "moviepy"
 ]
