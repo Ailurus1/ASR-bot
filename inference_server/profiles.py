@@ -19,7 +19,19 @@ PROFILES = {
     ),
     "tiny-lora-farfield": ModelProfile(
         model_name="openai/whisper-tiny",
-        lora_name="lora-adapter-sber-farfield",
+        lora_name="RedCaesar/lora-adapter-sber-farfield",
+        hf=True,
+        model_features={"language": "russian", "task": "transcribe"},
+    ),
+    "tiny-lora-crowd": ModelProfile(
+        model_name="openai/whisper-tiny",
+        lora_name="RedCaesar/lora-adapter-sber-crowd",
+        hf=True,
+        model_features={"language": "russian", "task": "transcribe"},
+    ),
+    "tiny-lora-single": ModelProfile(
+        model_name="openai/whisper-tiny",
+        lora_name="RedCaesar/lora-adapter-single-voice",
         hf=True,
         model_features={"language": "russian", "task": "transcribe"},
     ),
