@@ -1,0 +1,42 @@
+---
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push bot image
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -f docker/bot/Dockerfile.bot -t ghcr.io/${REPO_NAME}/bot:v0.${GITHUB_RUN_NUMBER} .
+          docker push ghcr.io/${REPO_NAME}/bot:v0.${GITHUB_RUN_NUMBER}
+          docker tag ghcr.io/${REPO_NAME}/bot:v0.${GITHUB_RUN_NUMBER} ghcr.io/${REPO_NAME}/bot:latest
+          docker push ghcr.io/${REPO_NAME}/bot:latest
+
+      - name: Build and push inference server image
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          docker build -f docker/inference-server/Dockerfile.inference-server -t ghcr.io/${REPO_NAME}/inference-server:v0.${GITHUB_RUN_NUMBER} .
+          docker push ghcr.io/${REPO_NAME}/inference-server:v0.${GITHUB_RUN_NUMBER}
+          docker tag ghcr.io/${REPO_NAME}/inference-server:v0.${GITHUB_RUN_NUMBER} ghcr.io/${REPO_NAME}/inference-server:latest
+          docker push ghcr.io/${REPO_NAME}/inference-server:latest
