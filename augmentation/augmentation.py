@@ -7,12 +7,7 @@ import os
 
 def cli():
     parser = argparse.ArgumentParser(description='Arguments with dataset_name, augment_type and augment_params')
-    parser.add_argument(
-        '--dataset_name',
-        '-df',
-        type=str,
-        required=True,
-        help='Name of dataset')
+
     parser.add_argument(
         '--augment_type',
         '-aug_type',
