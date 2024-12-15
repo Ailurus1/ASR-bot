@@ -14,7 +14,8 @@ app = FastAPI()
 T = TypeVar("T")
 U = TypeVar("U")
 
-class DataCollator:
+
+class DataCollator(Generic[T]):
     def __init__(self, stack: bool = False) -> None:
         super().__init__()
         self.stack = stack
@@ -25,8 +26,8 @@ class DataCollator:
 
         return torch.cat(inputs)
 
-    def uncollate(self, input: T) -> List[T]:
-        return [x if self.stack else x.unsqueeze(0) for x in input]
+    def uncollate(self, inputs: T) -> List[T]:
+        return [x if self.stack else x.unsqueeze(0) for x in inputs]
 
 
 class BatchedServer(Generic[T, U]):
@@ -36,9 +37,7 @@ class BatchedServer(Generic[T, U]):
         batch_size: int,
         collator: Optional[DataCollator[T]] = None,
     ) -> None:
-        self.queue: Queue[Tuple[T, Future[U], float]] = Queue(
-            maxsize=2 * batch_size
-        )
+        self.queue: Queue[Tuple[T, Future[U], float]] = Queue(maxsize=2 * batch_size)
         self.inference_callable = inference_callable
         self.batch_size = batch_size
         self.collator = collator if collator is not None else DataCollator()
@@ -50,7 +49,7 @@ class BatchedServer(Generic[T, U]):
         return await future
 
     async def queue_processing(self):
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
 
         while True:
             if not self.queue.empty():
@@ -68,7 +67,7 @@ class BatchedServer(Generic[T, U]):
                     outputs_list = self.collator.uncollate(outputs)
                     for output, future in zip(outputs_list, futures):
                         future.set_result(output)
-                except Exception as exc:
+                except Exception:
                     for future in futures:
                         future.set_exception(Exception("Could not process batch"))
             else:
@@ -78,13 +77,16 @@ class BatchedServer(Generic[T, U]):
         loop = asyncio.get_running_loop()
         loop.create_task(self.queue_processing())
 
+
 def inference(audio_bytes):
     return app.state.asr_model.transcribe(audio_bytes)
+
 
 batched_server = BatchedServer(
     inference,
     batch_size=8,
 )
+
 
 @app.post("/asr/")
 async def transcribe_audio(audio_message: UploadFile = File(...)):

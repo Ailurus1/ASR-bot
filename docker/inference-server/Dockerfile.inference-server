@@ -2,7 +2,7 @@ FROM ghcr.io/astral-sh/uv:0.5.5-python3.12-bookworm-slim
 
 COPY . .
 
-RUN uv pip install --system -r inference_server/requirements.txt
+RUN uv pip install --system -r pyproject.toml --extra asr-service
 
 EXPOSE 9090:9090
 
