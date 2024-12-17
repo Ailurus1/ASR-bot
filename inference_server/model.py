@@ -16,7 +16,7 @@ from typing import get_args
 
 
 UnpreparedAudioType = Union[BytesIO, str, Path]
-PreparedAudioType = Union[np.array, torch.tensor]
+PreparedAudioType = Union[np.ndarray, torch.Tensor]
 AudioType = Union[UnpreparedAudioType, PreparedAudioType]
 
 
@@ -28,7 +28,7 @@ class ASRModel:
     def __init__(self, config: ModelProfile) -> None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         if not config.hf:
-            assert "Not implemented"
+            assert NotImplementedError()
 
         model = AutoModelForSpeechSeq2Seq.from_pretrained(config.model_name).to(device)
 
@@ -58,26 +58,38 @@ class ASRModel:
         )
         self.sampling_rate = self.pipeline.feature_extractor.sampling_rate
 
-    def preprocess(self, audio: UnpreparedAudioType) -> List[float]:
-        audio_data, sample_rate = torchaudio.load(audio)
-
-        if sample_rate != self.sampling_rate:
-            resampler = torchaudio.transforms.Resample(
-                orig_freq=sample_rate,
-                new_freq=self.sampling_rate,
-            )
-            audio_data = resampler(audio_data)
-        return audio_data.squeeze().numpy()
+    def preprocess(self, audio: Union[UnpreparedAudioType, List[UnpreparedAudioType]]) -> Union[List[float], List[List[float]]]:
+        # Handle single input
+        if not isinstance(audio, list):
+            audio = [audio]
+        
+        processed = []
+        for audio_item in audio:
+            audio_data, sample_rate = torchaudio.load(audio_item)
+            if sample_rate != self.sampling_rate:
+                resampler = torchaudio.transforms.Resample(
+                    orig_freq=sample_rate,
+                    new_freq=self.sampling_rate,
+                )
+                audio_data = resampler(audio_data)
+            processed.append(audio_data.squeeze().numpy())
+        
+        return processed
 
     def transcribe(self, audio: Union[AudioType, List[AudioType]]) -> List[str]:
-        if isinstance(audio, get_args(UnpreparedAudioType)):
+        # Handle single input
+        if not isinstance(audio, list):
+            audio = [audio]
+        
+        # Preprocess if needed
+        if any(isinstance(a, get_args(UnpreparedAudioType)) for a in audio):
             audio = self.preprocess(audio)
 
-        with torch.cuda.amp.autocast():
+        with torch.amp.autocast("cuda"):
             outputs = self.pipeline(
                 audio, generate_kwargs=self.generate_kwargs, max_new_tokens=255
             )
-            if isinstance(outputs, List):
+            if isinstance(outputs, list):
                 outputs = [output["text"] for output in outputs]
             else:
                 outputs = [outputs["text"]]

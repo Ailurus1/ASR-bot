@@ -8,8 +8,14 @@ import asyncio
 from asyncio import Future
 from asyncio.queues import Queue
 from typing import Callable, Generic, TypeVar, Tuple, List, Optional
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    batched_server.run()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -21,12 +27,17 @@ class DataCollator(Generic[T]):
         self.stack = stack
 
     def collate(self, inputs: List[T]) -> T:
+        if isinstance(inputs[0], bytes):
+            return inputs
+            
         if self.stack is not None:
             return torch.stack(inputs)
-
         return torch.cat(inputs)
 
     def uncollate(self, inputs: T) -> List[T]:
+        if isinstance(inputs, (list, str)) or (isinstance(inputs, list) and isinstance(inputs[0], bytes)):
+            return [inputs] if isinstance(inputs, str) else inputs
+            
         return [x if self.stack else x.unsqueeze(0) for x in inputs]
 
 
@@ -35,43 +46,58 @@ class BatchedServer(Generic[T, U]):
         self,
         inference_callable: Callable[[T], U],
         batch_size: int,
+        max_wait_time: float = 0.1, # seconds
         collator: Optional[DataCollator[T]] = None,
     ) -> None:
         self.queue: Queue[Tuple[T, Future[U], float]] = Queue(maxsize=2 * batch_size)
         self.inference_callable = inference_callable
         self.batch_size = batch_size
+        self.max_wait_time = max_wait_time
         self.collator = collator if collator is not None else DataCollator()
 
     async def submit(self, input: T) -> U:
         loop = asyncio.get_running_loop()
         future = loop.create_future()
         await self.queue.put((input, future, loop.time()))
-        return await future
+        try:
+            return await asyncio.wait_for(future, timeout=10.0)
+        except asyncio.TimeoutError:
+            raise RuntimeError("Request processing timed out")
 
     async def queue_processing(self):
-        asyncio.get_running_loop()
+        loop = asyncio.get_running_loop()
 
         while True:
             if not self.queue.empty():
-                batch_size = min(self.queue.qsize(), self.batch_size)
-                inputs_list: List[T] = []
-                futures: List[Future[U]] = []
-                for _ in range(batch_size):
-                    input, future, _ = self.queue.get_nowait()
-                    inputs_list.append(input)
-                    futures.append(future)
-                inputs = self.collator.collate(inputs_list)
+                current_time = loop.time()
+                first_item = await self.queue.get()
+                await self.queue.put(first_item)
+                
+                if (current_time - first_item[2] >= self.max_wait_time or 
+                    self.queue.qsize() >= self.batch_size):
+                    
+                    batch_size = min(self.queue.qsize(), self.batch_size)
+                    inputs_list: List[T] = []
+                    futures: List[Future[U]] = []
+                    
+                    for _ in range(batch_size):
+                        input, future, _ = self.queue.get_nowait()
+                        inputs_list.append(input)
+                        futures.append(future)
+                    
+                    inputs = self.collator.collate(inputs_list)
 
-                try:
-                    outputs = await asyncio.to_thread(self.inference_callable, inputs)
-                    outputs_list = self.collator.uncollate(outputs)
-                    for output, future in zip(outputs_list, futures):
-                        future.set_result(output)
-                except Exception:
-                    for future in futures:
-                        future.set_exception(Exception("Could not process batch"))
-            else:
-                await asyncio.sleep(0.01)
+                    try:
+                        outputs = await asyncio.to_thread(self.inference_callable, inputs)
+                        outputs_list = self.collator.uncollate(outputs)
+                        
+                        for output, future in zip(outputs_list, futures):
+                            future.set_result(output)
+                    except Exception as e:
+                        for future in futures:
+                            future.set_exception(e)
+            
+            await asyncio.sleep(0.01)
 
     def run(self):
         loop = asyncio.get_running_loop()
@@ -87,13 +113,26 @@ batched_server = BatchedServer(
     batch_size=8,
 )
 
-
 @app.post("/asr/")
 async def transcribe_audio(audio_message: UploadFile = File(...)):
     try:
         audio_bytes = await audio_message.read()
-        transcription = batched_server.submit(audio_bytes)
-        return JSONResponse(content={"transcription": transcription})
+        transcription = await batched_server.submit(audio_bytes)
+        
+        transcription = transcription.strip()
+
+        if not transcription:
+            return JSONResponse(
+                content={"error": "Could not transcribe audio (empty result)"}, 
+                status_code=400
+            )
+        
+        response_data = {"transcription": transcription}
+
+        return JSONResponse(
+            content=response_data,
+            media_type="application/json; charset=utf-8"
+        )
 
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
