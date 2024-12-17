@@ -13,7 +13,7 @@ dependencies = [
 
 [project.optional-dependencies]
 bot = [
-    "python-telegram-bot",
+    "python-telegram-bot[callback-data]",
     "moviepy ==1.0.3",
     "requests"
 ]
