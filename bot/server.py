@@ -82,16 +82,16 @@ class Bot(object):
             response_data = json.loads(raw_response.text)
             if "error" in response_data:
                 raise RuntimeError(f"ASR service error: {response_data['error']}")
-            
+
             text = response_data["transcription"]
             if not isinstance(text, str):
                 raise RuntimeError(f"Unexpected transcription format: {text}")
-            
+
         except json.JSONDecodeError as exc:
             await get_error_message(context, message.chat_id)
             print(f"JSON decode error: {exc}")
             print(f"Raw response: {raw_response.text}")
-            raise RuntimeError(f"Invalid JSON response from ASR service")
+            raise RuntimeError("Invalid JSON response from ASR service")
         except Exception as exc:
             await get_error_message(context, message.chat_id)
             print(exc)
@@ -107,7 +107,7 @@ class Bot(object):
         await context.bot.send_message(
             chat_id=message.chat_id,
             text=text,
-            reply_to_message_id=update.message.message_id
+            reply_to_message_id=update.message.message_id,
         )
 
     def run(self) -> None:

@@ -58,11 +58,13 @@ class ASRModel:
         )
         self.sampling_rate = self.pipeline.feature_extractor.sampling_rate
 
-    def preprocess(self, audio: Union[UnpreparedAudioType, List[UnpreparedAudioType]]) -> Union[List[float], List[List[float]]]:
+    def preprocess(
+        self, audio: Union[UnpreparedAudioType, List[UnpreparedAudioType]]
+    ) -> Union[List[float], List[List[float]]]:
         # Handle single input
         if not isinstance(audio, list):
             audio = [audio]
-        
+
         processed = []
         for audio_item in audio:
             audio_data, sample_rate = torchaudio.load(audio_item)
@@ -73,14 +75,14 @@ class ASRModel:
                 )
                 audio_data = resampler(audio_data)
             processed.append(audio_data.squeeze().numpy())
-        
+
         return processed
 
     def transcribe(self, audio: Union[AudioType, List[AudioType]]) -> List[str]:
         # Handle single input
         if not isinstance(audio, list):
             audio = [audio]
-        
+
         # Preprocess if needed
         if any(isinstance(a, get_args(UnpreparedAudioType)) for a in audio):
             audio = self.preprocess(audio)
