@@ -27,7 +27,9 @@ asr-service = [
     "soundfile",
     "python-multipart",
     "peft",
-    "setuptools"
+    "setuptools",
+    "pyannote.audio",
+    "pyannote.core"
 ]
 train = [
     "numpy <2.0.0",
@@ -64,3 +66,7 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["inference_server", "modeling", "bot"]
+
+[tool.poetry.dependencies]
+pyannote-audio = "*"
+pyannote-core = "*"

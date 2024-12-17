@@ -8,6 +8,8 @@ class ModelProfile:
     lora_name: Optional[str]
     hf: bool
     model_features: Dict[str, Any]
+    use_diarization: bool = False
+    diarization_model: str = "pyannote/speaker-diarization-3.1"
 
 
 PROFILES = {
@@ -34,5 +36,19 @@ PROFILES = {
         lora_name="RedCaesar/lora-adapter-single-voice",
         hf=True,
         model_features={"language": "russian", "task": "transcribe"},
+    ),
+    "tiny-with-diarization": ModelProfile(
+        model_name="openai/whisper-tiny",
+        lora_name=None,
+        hf=True,
+        model_features={"language": "russian", "task": "transcribe"},
+        use_diarization=True
+    ),
+    "tiny-finetuned-ru-with-diarization": ModelProfile(
+        model_name="Ailurus/whisper-tiny-finetuned-ru",
+        lora_name=None,
+        hf=True,
+        model_features={"language": "russian", "task": "transcribe"},
+        use_diarization=True
     ),
 }

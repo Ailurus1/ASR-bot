@@ -137,6 +137,6 @@ async def transcribe_audio(audio_message: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    config = PROFILES["classical-tiny"]
+    config = PROFILES["tiny-finetuned-ru-with-diarization"]
     app.state.asr_model = ASRModel(config)
     uvicorn.run(app, host="0.0.0.0", port=9090, log_level="debug")
