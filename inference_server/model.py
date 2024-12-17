@@ -61,7 +61,6 @@ class ASRModel:
     def preprocess(
         self, audio: Union[UnpreparedAudioType, List[UnpreparedAudioType]]
     ) -> Union[List[float], List[List[float]]]:
-        # Handle single input
         if not isinstance(audio, list):
             audio = [audio]
 
@@ -79,11 +78,9 @@ class ASRModel:
         return processed
 
     def transcribe(self, audio: Union[AudioType, List[AudioType]]) -> List[str]:
-        # Handle single input
         if not isinstance(audio, list):
             audio = [audio]
 
-        # Preprocess if needed
         if any(isinstance(a, get_args(UnpreparedAudioType)) for a in audio):
             audio = self.preprocess(audio)
 
