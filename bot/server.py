@@ -25,21 +25,34 @@ class Bot(object):
         self.keyboard: List[Any] = []
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        reply_markup = InlineKeyboardMarkup(self.keyboard)
-        await update.message.reply_text(
-            "Hi! I can turn any of your audio message into text."
-            "Please, send me a single voice message and I will response"
-            "as soon as possible",
-            reply_markup=reply_markup,
-        )
+        # Check if it's a private chat or group
+        if update.effective_chat.type == "private":
+            reply_markup = InlineKeyboardMarkup(self.keyboard)
+            await update.message.reply_text(
+                "Hi! I can turn any of your audio or video messages into text. "
+                "Please, send me a single voice message and I will respond "
+                "as soon as possible",
+                reply_markup=reply_markup,
+            )
+        else:
+            await update.message.reply_text(
+                "Hi! I'm ready to transcribe voice messages in this group. "
+                "Just send a voice message and I'll transcribe it!"
+            )
 
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        reply_markup = InlineKeyboardMarkup(self.keyboard)
-        await update.message.reply_text(
-            "Currently I can't do much, but if you send"
-            "me a voice message I will trancsribe it into text",
-            reply_markup=reply_markup,
-        )
+        if update.effective_chat.type == "private":
+            reply_markup = InlineKeyboardMarkup(self.keyboard)
+            await update.message.reply_text(
+                "Currently I can't do much, but if you send "
+                "me a voice message I will transcribe it into text",
+                reply_markup=reply_markup,
+            )
+        else:
+            await update.message.reply_text(
+                "I can transcribe voice messages in this group. "
+                "Just send a voice message!"
+            )
 
     async def query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -111,9 +124,6 @@ class Bot(object):
         )
 
     def run(self) -> None:
-        """
-        Infinite polling
-        """
         self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("help", self.help))
         self.app.add_handler(
@@ -123,8 +133,11 @@ class Bot(object):
             )
         )
         self.app.add_handler(
-            MessageHandler(filters.VIDEO_NOTE & ~filters.COMMAND, self.query)
+            MessageHandler(
+                filters.VIDEO_NOTE & ~filters.COMMAND,
+                self.query
+            )
         )
 
         print("Running bot...")
-        self.app.run_polling()
+        self.app.run_polling(allowed_updates=Update.ALL_TYPES)
