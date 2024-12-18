@@ -9,7 +9,7 @@ description = ""
 dependencies = [
     "pre-commit",
     "pytest",
-    "numpy <2.0.0.",
+    "numpy <2.0.0",
     "httpx",
     "pytest-asyncio",
     "soundfile",
