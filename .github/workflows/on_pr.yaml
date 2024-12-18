@@ -35,4 +35,5 @@ jobs:
 
     - name: Run tests
       run: |
+        uv pip install -r pyproject.toml --extra asr-service
         pytest -v tests/

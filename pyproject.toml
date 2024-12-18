@@ -9,11 +9,8 @@ description = ""
 dependencies = [
     "pre-commit",
     "pytest",
-    "numpy <2.0.0",
     "httpx",
     "pytest-asyncio",
-    "soundfile",
-    "python-multipart"
 ]
 
 [project.optional-dependencies]
@@ -29,7 +26,10 @@ asr-service = [
     "transformers",
     "torchaudio",
     "peft",
-    "setuptools"
+    "setuptools",
+    "soundfile",
+    "python-multipart"
+    "numpy <2.0.0"
 ]
 train = [
     "numpy <2.0.0",
