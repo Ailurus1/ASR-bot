@@ -73,8 +73,10 @@ class BatchedServer:
 
                 if batch:
                     try:
-                        results = await asyncio.to_thread(self.inference_callable, batch)
-                        
+                        results = await asyncio.to_thread(
+                            self.inference_callable, batch
+                        )
+
                         for future, result in zip(futures, results):
                             if isinstance(result, list):
                                 result = result[0]
