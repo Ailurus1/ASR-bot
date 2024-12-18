@@ -156,3 +156,4 @@ cython_debug/
 
 */.venv
 */.env
+/tests/data/

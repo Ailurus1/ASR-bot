@@ -1,13 +1,14 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 import uvicorn
-from model import ASRModel
-from profiles import PROFILES
+from .model import ASRModel
+from .profiles import PROFILES
 import asyncio
 from asyncio import Future
 from asyncio.queues import Queue
 from typing import Callable, List, Optional
 from contextlib import asynccontextmanager
+from io import BytesIO
 
 
 @asynccontextmanager
@@ -52,45 +53,36 @@ class BatchedServer:
         future = loop.create_future()
         await self.queue.put((input, future, loop.time()))
         try:
-            return await asyncio.wait_for(future, timeout=10.0)
+            return await asyncio.wait_for(future, timeout=20.0)
         except asyncio.TimeoutError:
             raise RuntimeError("Request processing timed out")
 
     async def queue_processing(self):
-        loop = asyncio.get_running_loop()
-
         while True:
             if not self.queue.empty():
-                current_time = loop.time()
-                first_item = await self.queue.get()
-                await self.queue.put(first_item)
+                batch = []
+                futures = []
 
-                if (
-                    current_time - first_item[2] >= self.max_wait_time
-                    or self.queue.qsize() >= self.batch_size
-                ):
-                    batch_size = min(self.queue.qsize(), self.batch_size)
-                    inputs_list: List[bytes] = []
-                    futures: List[Future[str]] = []
-
-                    for _ in range(batch_size):
-                        input, future, _ = self.queue.get_nowait()
-                        inputs_list.append(input)
-                        futures.append(future)
-
-                    inputs = self.collator.collate(inputs_list)
-
+                while len(batch) < self.batch_size and not self.queue.empty():
                     try:
-                        outputs = await asyncio.to_thread(
-                            self.inference_callable, inputs
-                        )
-                        outputs_list = self.collator.uncollate(outputs)
+                        input_data, future, _ = self.queue.get_nowait()
+                        batch.append(BytesIO(input_data))
+                        futures.append(future)
+                    except asyncio.QueueEmpty:
+                        break
 
-                        for output, future in zip(outputs_list, futures):
-                            future.set_result(output)
+                if batch:
+                    try:
+                        results = await asyncio.to_thread(self.inference_callable, batch)
+                        
+                        for future, result in zip(futures, results):
+                            if isinstance(result, list):
+                                result = result[0]
+                            future.set_result(result)
                     except Exception as e:
                         for future in futures:
-                            future.set_exception(e)
+                            if not future.done():
+                                future.set_exception(e)
 
             await asyncio.sleep(0.01)
 
