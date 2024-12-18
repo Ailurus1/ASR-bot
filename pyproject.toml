@@ -8,34 +8,49 @@ description = ""
 
 dependencies = [
     "pre-commit",
-    "pytest"
+    "pytest",
+    "httpx>=0.24.0,<0.25.0",
+    "pytest-asyncio",
 ]
 
 [project.optional-dependencies]
 bot = [
     "python-telegram-bot",
-    "requests",
+    "moviepy ==1.0.3",
+    "requests"
 ]
 asr-service = [
     "fastapi",
-    "numpy <2.0.0",
     "uvicorn",
-    "torch",
+    "torch ==2.5.1",
     "transformers",
     "torchaudio",
-    "soundfile",
-    "python-multipart",
     "peft",
     "setuptools",
-    "moviepy"
+    "soundfile",
+    "python-multipart",
+    "numpy <2.0.0"
 ]
 train = [
     "numpy <2.0.0",
     "torch",
-    "torchaudio",
+    "torchaudio ==2.5.1",
     "transformers",
     "polars",
     "jiwer",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu"},
+]
+torchaudio = [
+    { index = "pytorch-cpu"},
 ]
 
 [tool.mypy]
@@ -45,6 +60,9 @@ ignore_missing_imports = true
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["inference_server", "modeling", "bot"]

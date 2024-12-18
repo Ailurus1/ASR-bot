@@ -7,6 +7,6 @@ RUN apk update && \
 
 COPY . .
 
-RUN uv pip install --system -r bot/requirements.txt
+RUN uv pip install --system -r pyproject.toml --extra bot
 
 CMD [ "python3", "-u", "bot" ]
