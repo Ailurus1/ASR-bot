@@ -18,21 +18,18 @@ from utils import get_error_message
 import logging
 
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
+
 
 class Bot(object):
     def __init__(
         self, token: str, model_endpoint: str = "http://localhost:9090/asr/"
     ) -> None:
         self.logger = logging.getLogger(__name__)
-        
+
         self.app = (
-            ApplicationBuilder()
-            .token(token)
-            .arbitrary_callback_data(True)
-            .build()
+            ApplicationBuilder().token(token).arbitrary_callback_data(True).build()
         )
         self.model_endpoint = model_endpoint
         self.keyboard: List[Any] = []
@@ -40,10 +37,10 @@ class Bot(object):
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.effective_chat:
             return
-            
+
         chat_type = update.effective_chat.type
         self.logger.info(f"Received /start in {chat_type} chat")
-        
+
         if chat_type == "private":
             reply_markup = InlineKeyboardMarkup(self.keyboard)
             await update.message.reply_text(
@@ -55,16 +52,20 @@ class Bot(object):
         else:
             bot_member = await update.effective_chat.get_member(context.bot.id)
             can_send_messages = bot_member.can_send_messages if bot_member else False
-            
-            self.logger.info(f"Bot permissions in group: can_send_messages={can_send_messages}")
-            
+
+            self.logger.info(
+                f"Bot permissions in group: can_send_messages={can_send_messages}"
+            )
+
             if can_send_messages:
                 await update.message.reply_text(
                     "Hi! I'm ready to transcribe voice messages in this group. "
                     "Just send a voice message and I'll transcribe it!"
                 )
             else:
-                self.logger.warning("Bot doesn't have permission to send messages in this group")
+                self.logger.warning(
+                    "Bot doesn't have permission to send messages in this group"
+                )
 
     async def help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if update.effective_chat.type == "private":
@@ -83,16 +84,16 @@ class Bot(object):
     async def query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.effective_chat or not update.message:
             return
-            
+
         chat_type = update.effective_chat.type
         self.logger.info(f"Received voice message in {chat_type} chat")
-        
+
         try:
             message = await update.message.reply_text(
                 "Transcribing your audio message...",
                 reply_to_message_id=update.message.message_id,
             )
-            
+
             if update.message.voice is not None:
                 audio = await update.message.voice.get_file()
                 audio_bytes = BytesIO(await audio.download_as_bytearray())
@@ -116,8 +117,8 @@ class Bot(object):
                     files={"audio_message": ("audio_message.wav", audio_bytes)},
                     timeout=None,
                 )
-                self.logger.info(f"Got response from ASR service")
-                
+                self.logger.info("Got response from ASR service")
+
             except Exception as exc:
                 self.logger.error(f"ASR service error: {exc}")
                 await get_error_message(context, message.chat_id)
@@ -153,7 +154,7 @@ class Bot(object):
                 text=text,
                 reply_to_message_id=update.message.message_id,
             )
-            
+
         except Exception as e:
             self.logger.error(f"General error in query: {e}")
             raise
@@ -161,18 +162,17 @@ class Bot(object):
     def run(self) -> None:
         self.app.add_handler(CommandHandler("start", self.start))
         self.app.add_handler(CommandHandler("help", self.help))
-        
+
         self.app.add_handler(
             MessageHandler(
-                (filters.VOICE | filters.VIDEO_NOTE) & 
-                ~filters.COMMAND & 
-                (filters.ChatType.GROUPS | filters.ChatType.PRIVATE),
+                (filters.VOICE | filters.VIDEO_NOTE)
+                & ~filters.COMMAND
+                & (filters.ChatType.GROUPS | filters.ChatType.PRIVATE),
                 self.query,
             )
         )
 
         self.logger.info("Bot is running...")
         self.app.run_polling(
-            allowed_updates=Update.ALL_TYPES,
-            drop_pending_updates=True
+            allowed_updates=Update.ALL_TYPES, drop_pending_updates=True
         )

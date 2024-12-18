@@ -42,7 +42,7 @@ PROFILES = {
         lora_name=None,
         hf=True,
         model_features={"language": "russian", "task": "transcribe"},
-        use_diarization=True
+        use_diarization=True,
     ),
     "tiny-finetuned-ru-golos-sova-common_voice": ModelProfile(
         model_name="Ailurus/whisper-tiny-finetuned-ru",
@@ -55,6 +55,6 @@ PROFILES = {
         lora_name=None,
         hf=True,
         model_features={"language": "russian", "task": "transcribe"},
-        use_diarization=True
+        use_diarization=True,
     ),
 }
