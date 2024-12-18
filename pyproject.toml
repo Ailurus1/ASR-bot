@@ -28,7 +28,7 @@ asr-service = [
     "peft",
     "setuptools",
     "soundfile",
-    "python-multipart"
+    "python-multipart",
     "numpy <2.0.0"
 ]
 train = [
