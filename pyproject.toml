@@ -8,7 +8,9 @@ description = ""
 
 dependencies = [
     "pre-commit",
-    "pytest"
+    "pytest",
+    "httpx>=0.24.0,<0.25.0",
+    "pytest-asyncio",
 ]
 
 [project.optional-dependencies]
@@ -19,15 +21,14 @@ bot = [
 ]
 asr-service = [
     "fastapi",
-    "numpy <2.0.0",
     "uvicorn",
     "torch ==2.5.1",
     "transformers",
     "torchaudio",
-    "soundfile",
-    "python-multipart",
     "peft",
     "setuptools",
+    "soundfile",
+    "python-multipart",
     "pyannote.audio",
     "pyannote.core"
 ]

@@ -11,8 +11,7 @@ from transformers import (
 from peft import PeftModel
 from pyannote.audio import Pipeline
 
-from profiles import ModelProfile
-
+from .profiles import ModelProfile
 
 class ASRModel:
     def __init__(self, config: ModelProfile) -> None:
