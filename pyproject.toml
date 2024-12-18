@@ -8,7 +8,12 @@ description = ""
 
 dependencies = [
     "pre-commit",
-    "pytest"
+    "pytest",
+    "numpy <2.0.0.",
+    "httpx",
+    "pytest-asyncio",
+    "soundfile",
+    "python-multipart"
 ]
 
 [project.optional-dependencies]
@@ -19,13 +24,10 @@ bot = [
 ]
 asr-service = [
     "fastapi",
-    "numpy <2.0.0",
     "uvicorn",
     "torch ==2.5.1",
     "transformers",
     "torchaudio",
-    "soundfile",
-    "python-multipart",
     "peft",
     "setuptools"
 ]
