@@ -15,7 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 bot = [
-    "python-telegram-bot",
+    "python-telegram-bot[callback-data]",
     "moviepy ==1.0.3",
     "requests"
 ]
@@ -29,7 +29,9 @@ asr-service = [
     "setuptools",
     "soundfile",
     "python-multipart",
-    "numpy <2.0.0"
+    "numpy <2.0.0",
+    "pyannote.audio",
+    "pyannote.core"
 ]
 train = [
     "numpy <2.0.0",
