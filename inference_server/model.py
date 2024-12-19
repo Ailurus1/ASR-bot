@@ -63,7 +63,6 @@ class ASRModel:
         )
         self.sampling_rate = self.pipeline.feature_extractor.sampling_rate
         
-        # Initialize diarization if needed
         self.use_diarization = getattr(config, 'use_diarization', False)
         if self.use_diarization:
             self.diarization = Pipeline.from_pretrained(
@@ -99,7 +98,6 @@ class ASRModel:
         logger.info("Starting diarization process")
         diarization = self.diarization(audio_path)
         
-        # Create segments with speaker information
         segments = []
         for turn, _, speaker in diarization.itertracks(yield_label=True):
             segments.append({
@@ -110,27 +108,23 @@ class ASRModel:
         
         logger.info(f"Found {len(segments)} speaker segments")
         
-        # Sort segments by start time
         segments.sort(key=lambda x: x["start"])
         
-        # Transcribe the full audio
         logger.info("Starting transcription")
         with torch.amp.autocast("cuda"):
             result = self.pipeline(
                 audio_path,
                 generate_kwargs=self.generate_kwargs,
-                chunk_length_s=30,  # Add chunking for long audio
-                stride_length_s=5,   # Add overlap between chunks
+                chunk_length_s=30,
+                stride_length_s=5,
                 return_timestamps=True
             )
         
         logger.info(f"Raw transcription result: {result}")
         
-        # If we have no valid timestamps but have text, use the full text with speaker segments
         if isinstance(result, dict) and "text" in result:
             text = result["text"].strip()
             if text:
-                # Split text into roughly equal parts based on speaker segments
                 if segments:
                     final_text = ""
                     words = text.split()
@@ -144,10 +138,8 @@ class ASRModel:
                     
                     return final_text.strip()
                 else:
-                    # If no speaker segments, return with UNKNOWN speaker
                     return f"[UNKNOWN]: {text}"
         
-        # If we have valid chunks with timestamps, process them as before
         final_text = ""
         current_speaker = None
         
@@ -168,12 +160,10 @@ class ASRModel:
                 logger.warning("Empty text in chunk")
                 continue
             
-            # Get timestamp safely
             timestamp = chunk.get("timestamp")
             if not timestamp or len(timestamp) != 2 or None in timestamp:
-                # If no valid timestamp but we have text, try to match with the nearest speaker segment
                 if segments:
-                    speaker = segments[0]["speaker"]  # Use first speaker as fallback
+                    speaker = segments[0]["speaker"]
                     if current_speaker != speaker:
                         current_speaker = speaker
                         final_text += f"\n[{current_speaker}]: "
@@ -185,7 +175,6 @@ class ASRModel:
                 start_time, end_time = timestamp
                 chunk_middle = (float(start_time) + float(end_time)) / 2
                 
-                # Find the speaker for this timestamp
                 speaker = None
                 for segment in segments:
                     if segment["start"] <= chunk_middle <= segment["end"]:
@@ -214,11 +203,9 @@ class ASRModel:
         results = []
         for audio_item in audio:
             if self.use_diarization:
-                # For diarization, we need to save the audio temporarily
                 if isinstance(audio_item, (str, Path)):
                     audio_path = str(audio_item)
                 else:
-                    # Save numpy array as temporary wav file
                     temp_path = "temp_audio.wav"
                     torchaudio.save(temp_path, torch.tensor(audio_item).unsqueeze(0), self.sampling_rate)
                     audio_path = temp_path
