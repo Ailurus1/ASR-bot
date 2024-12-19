@@ -53,7 +53,7 @@ class BatchedServer:
         future = loop.create_future()
         await self.queue.put((input, future, loop.time()))
         try:
-            return await asyncio.wait_for(future, timeout=20.0)
+            return await asyncio.wait_for(future, timeout=120.0)
         except asyncio.TimeoutError:
             raise RuntimeError("Request processing timed out")
 
@@ -131,6 +131,6 @@ async def transcribe_audio(audio_message: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    config = PROFILES["classical-tiny"]
+    config = PROFILES["tiny-finetuned-ru-golos-sova-common_voice"]
     app.state.asr_model = ASRModel(config)
     uvicorn.run(app, host="0.0.0.0", port=9090, log_level="debug")
