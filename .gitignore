@@ -156,10 +156,7 @@ cython_debug/
 
 */.venv
 */.env
-<<<<<<< HEAD
 *.mp4
 *.oga
 *.wav
-=======
->>>>>>> origin
 /tests/data/
