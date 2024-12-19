@@ -31,6 +31,7 @@ asr-service = [
     "python-multipart",
     "pyannote.audio",
     "pyannote.core"
+    "numpy <2.0.0"
 ]
 train = [
     "numpy <2.0.0",
