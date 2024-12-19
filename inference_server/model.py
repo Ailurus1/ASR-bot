@@ -14,7 +14,6 @@ from pathlib import Path
 import numpy as np
 from typing import get_args
 from pyannote.audio import Pipeline
-import torch
 import logging
 
 
@@ -59,15 +58,15 @@ class ASRModel:
             tokenizer=tokenizer,
             feature_extractor=processor.feature_extractor,
             device=device,
-            return_timestamps=True
+            return_timestamps=True,
         )
         self.sampling_rate = self.pipeline.feature_extractor.sampling_rate
-        
-        self.use_diarization = getattr(config, 'use_diarization', False)
+
+        self.use_diarization = getattr(config, "use_diarization", False)
         if self.use_diarization:
             self.diarization = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization-3.1",
-                use_auth_token="YOUR_HF_TOKEN"  # Need to be configured
+                use_auth_token="YOUR_HF_TOKEN",  # Need to be configured
             ).to(device)
 
     def preprocess(
@@ -79,17 +78,17 @@ class ASRModel:
         processed = []
         for audio_item in audio:
             audio_data, sample_rate = torchaudio.load(audio_item)
-            
+
             if audio_data.shape[0] > 1:
                 audio_data = audio_data.mean(dim=0, keepdim=True)
-            
+
             if sample_rate != self.sampling_rate:
                 resampler = torchaudio.transforms.Resample(
                     orig_freq=sample_rate,
                     new_freq=self.sampling_rate,
                 )
                 audio_data = resampler(audio_data)
-            
+
             processed.append(audio_data.squeeze().numpy())
 
         return processed
@@ -97,19 +96,15 @@ class ASRModel:
     def _process_with_diarization(self, audio_path: str) -> str:
         logger.info("Starting diarization process")
         diarization = self.diarization(audio_path)
-        
+
         segments = []
         for turn, _, speaker in diarization.itertracks(yield_label=True):
-            segments.append({
-                "start": turn.start,
-                "end": turn.end,
-                "speaker": speaker
-            })
-        
+            segments.append({"start": turn.start, "end": turn.end, "speaker": speaker})
+
         logger.info(f"Found {len(segments)} speaker segments")
-        
+
         segments.sort(key=lambda x: x["start"])
-        
+
         logger.info("Starting transcription")
         with torch.amp.autocast("cuda"):
             result = self.pipeline(
@@ -117,11 +112,11 @@ class ASRModel:
                 generate_kwargs=self.generate_kwargs,
                 chunk_length_s=30,
                 stride_length_s=5,
-                return_timestamps=True
+                return_timestamps=True,
             )
-        
+
         logger.info(f"Raw transcription result: {result}")
-        
+
         if isinstance(result, dict) and "text" in result:
             text = result["text"].strip()
             if text:
@@ -129,37 +124,41 @@ class ASRModel:
                     final_text = ""
                     words = text.split()
                     words_per_segment = len(words) // len(segments)
-                    
+
                     for i, segment in enumerate(segments):
                         start_idx = i * words_per_segment
-                        end_idx = start_idx + words_per_segment if i < len(segments) - 1 else len(words)
+                        end_idx = (
+                            start_idx + words_per_segment
+                            if i < len(segments) - 1
+                            else len(words)
+                        )
                         segment_text = " ".join(words[start_idx:end_idx])
                         final_text += f"\n[{segment['speaker']}]: {segment_text}"
-                    
+
                     return final_text.strip()
                 else:
                     return f"[UNKNOWN]: {text}"
-        
+
         final_text = ""
         current_speaker = None
-        
+
         if isinstance(result, dict):
             chunks = result.get("chunks", [])
         else:
             chunks = result
-        
+
         logger.info(f"Processing {len(chunks)} chunks")
-        
+
         for chunk in chunks:
             if not isinstance(chunk, dict):
                 logger.warning(f"Skipping invalid chunk: {chunk}")
                 continue
-            
+
             text = chunk.get("text", "").strip()
             if not text:
                 logger.warning("Empty text in chunk")
                 continue
-            
+
             timestamp = chunk.get("timestamp")
             if not timestamp or len(timestamp) != 2 or None in timestamp:
                 if segments:
@@ -174,22 +173,22 @@ class ASRModel:
             else:
                 start_time, end_time = timestamp
                 chunk_middle = (float(start_time) + float(end_time)) / 2
-                
+
                 speaker = None
                 for segment in segments:
                     if segment["start"] <= chunk_middle <= segment["end"]:
                         speaker = segment["speaker"]
                         break
-                
+
                 if speaker and speaker != current_speaker:
                     current_speaker = speaker
                     final_text += f"\n[{current_speaker}]: "
                 elif not speaker and current_speaker != "UNKNOWN":
                     final_text += "\n[UNKNOWN]: "
                     current_speaker = "UNKNOWN"
-            
+
             final_text += text + " "
-        
+
         logger.info(f"Final text length: {len(final_text)}")
         return final_text.strip()
 
@@ -207,9 +206,13 @@ class ASRModel:
                     audio_path = str(audio_item)
                 else:
                     temp_path = "temp_audio.wav"
-                    torchaudio.save(temp_path, torch.tensor(audio_item).unsqueeze(0), self.sampling_rate)
+                    torchaudio.save(
+                        temp_path,
+                        torch.tensor(audio_item).unsqueeze(0),
+                        self.sampling_rate,
+                    )
                     audio_path = temp_path
-                
+
                 result = self._process_with_diarization(audio_path)
                 results.append(result)
             else:
@@ -217,8 +220,8 @@ class ASRModel:
                     result = self.pipeline(
                         audio_item,
                         generate_kwargs=self.generate_kwargs,
-                        max_new_tokens=255
+                        max_new_tokens=255,
                     )
-                    results.append(result["text"])
+                    results.append(result["text"])  # type: ignore
 
         return results
