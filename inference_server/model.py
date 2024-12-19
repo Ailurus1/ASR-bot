@@ -55,6 +55,7 @@ class ASRModel:
             tokenizer=tokenizer,
             feature_extractor=processor.feature_extractor,
             device=device,
+            return_timestamps=True
         )
         self.sampling_rate = self.pipeline.feature_extractor.sampling_rate
 
@@ -67,12 +68,17 @@ class ASRModel:
         processed = []
         for audio_item in audio:
             audio_data, sample_rate = torchaudio.load(audio_item)
+            
+            if audio_data.shape[0] > 1:
+                audio_data = audio_data.mean(dim=0, keepdim=True)
+            
             if sample_rate != self.sampling_rate:
                 resampler = torchaudio.transforms.Resample(
                     orig_freq=sample_rate,
                     new_freq=self.sampling_rate,
                 )
                 audio_data = resampler(audio_data)
+            
             processed.append(audio_data.squeeze().numpy())
 
         return processed
@@ -86,7 +92,9 @@ class ASRModel:
 
         with torch.amp.autocast("cuda"):
             outputs = self.pipeline(
-                audio, generate_kwargs=self.generate_kwargs, max_new_tokens=255
+                audio, 
+                generate_kwargs=self.generate_kwargs, 
+                max_new_tokens=255
             )
             if isinstance(outputs, list):
                 outputs = [output["text"] for output in outputs]

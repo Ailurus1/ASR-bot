@@ -157,3 +157,15 @@ cython_debug/
 */.venv
 */.env
 /tests/data/
+*.mp4
+*.m4a
+*.m4b
+*.m4p
+*.m4r
+*.m4v
+*.mp3
+*.mpga
+*.oga
+*.ogg
+*.wav
+*.webm
